@@ -1,0 +1,52 @@
+<<< Project PART I
+<<< -- process set (n=3) with 1 CPU-bound process
+<<< -- seed=32; lambda=0.001000; bound=1024
+CPU-bound process A0: arrival time 1024ms; 10 CPU bursts:
+==> CPU burst 1280ms ==> I/O burst 266ms
+==> CPU burst 4096ms ==> I/O burst 362ms
+==> CPU burst 2432ms ==> I/O burst 1024ms
+==> CPU burst 316ms ==> I/O burst 474ms
+==> CPU burst 3556ms ==> I/O burst 964ms
+==> CPU burst 2516ms ==> I/O burst 14ms
+==> CPU burst 4096ms ==> I/O burst 183ms
+==> CPU burst 2676ms ==> I/O burst 1024ms
+==> CPU burst 1872ms ==> I/O burst 82ms
+==> CPU burst 1020ms
+I/O-bound process A1: arrival time 1024ms; 10 CPU bursts:
+==> CPU burst 1024ms ==> I/O burst 8192ms
+==> CPU burst 1024ms ==> I/O burst 3888ms
+==> CPU burst 57ms ==> I/O burst 8192ms
+==> CPU burst 347ms ==> I/O burst 4184ms
+==> CPU burst 222ms ==> I/O burst 8192ms
+==> CPU burst 845ms ==> I/O burst 8192ms
+==> CPU burst 1024ms ==> I/O burst 472ms
+==> CPU burst 1024ms ==> I/O burst 3400ms
+==> CPU burst 109ms ==> I/O burst 8192ms
+==> CPU burst 166ms
+I/O-bound process A2: arrival time 331ms; 26 CPU bursts:
+==> CPU burst 918ms ==> I/O burst 3976ms
+==> CPU burst 767ms ==> I/O burst 8192ms
+==> CPU burst 987ms ==> I/O burst 3368ms
+==> CPU burst 1024ms ==> I/O burst 8192ms
+==> CPU burst 85ms ==> I/O burst 6088ms
+==> CPU burst 692ms ==> I/O burst 2160ms
+==> CPU burst 385ms ==> I/O burst 1192ms
+==> CPU burst 1024ms ==> I/O burst 3104ms
+==> CPU burst 84ms ==> I/O burst 8192ms
+==> CPU burst 56ms ==> I/O burst 5200ms
+==> CPU burst 1024ms ==> I/O burst 104ms
+==> CPU burst 78ms ==> I/O burst 8192ms
+==> CPU burst 1024ms ==> I/O burst 8192ms
+==> CPU burst 1024ms ==> I/O burst 7096ms
+==> CPU burst 141ms ==> I/O burst 1640ms
+==> CPU burst 1024ms ==> I/O burst 8040ms
+==> CPU burst 1024ms ==> I/O burst 1840ms
+==> CPU burst 448ms ==> I/O burst 3752ms
+==> CPU burst 507ms ==> I/O burst 8192ms
+==> CPU burst 971ms ==> I/O burst 432ms
+==> CPU burst 1024ms ==> I/O burst 1032ms
+==> CPU burst 1024ms ==> I/O burst 8192ms
+==> CPU burst 1024ms ==> I/O burst 8192ms
+==> CPU burst 158ms ==> I/O burst 1504ms
+==> CPU burst 187ms ==> I/O burst 8192ms
+==> CPU burst 1024ms

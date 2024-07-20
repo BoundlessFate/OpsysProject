@@ -27,12 +27,13 @@ def next_exp():
     return num
 
 # USE THIS CODE BELOW ONLY FOR TESTING!!! WILL REDIRECT STDERR
-sys.stderr = open('err.txt', 'w')
+#sys.stderr = open('err.txt', 'w')
+sys.stdout = open('stdout.txt', 'w')
 
 numArgs = len(sys.argv)
 if (numArgs != 6):
     sys.stderr.write("ERROR: wrong number of inputs given")
-    sys.stderr.close() # Close not needed on submit
+   # sys.stderr.close() # Close not needed on submit
     os.abort()
 n = int(sys.argv[1])
 nCpu = int(sys.argv[2])
@@ -58,15 +59,16 @@ for i in range(0,n):
     for j in range(0,numCPUBursts):
         CPUBurstTime = math.ceil(next_exp())
         IOBurstTime = 0
-        if i < nCpu - 1:
+        # If not last burst, calculate a io burst time
+        if j != numCPUBursts-1:
             IOBurstTime = math.ceil(next_exp())
-            cpuTotalCpu += CPUBurstTime
-            cpuTotalIO += IOBurstTime
+        # CPU bound process
         if i < nCpu:
             CPUBurstTime *= 4
             cpuTotalCpu += CPUBurstTime
+            cpuTotalIO += IOBurstTime
+        # IO Bound process
         else:
-            IOBurstTime = math.ceil(next_exp())
             IOBurstTime *= 8
             ioTotalCpu += CPUBurstTime
             ioTotalIO += IOBurstTime
@@ -86,7 +88,10 @@ else:
 print(f"<<< -- seed={seed}; lambda={lmda:.6f}; bound={upBound}")
 for i in range(0,len(arrivalTimes)):
     id = letters[math.floor(i/10)]+str(i%10)
-    print(f"CPU-bound process {id}: arrival time {arrivalTimes[i]}ms; {numCPUBurst[i]} CPU bursts:")
+    if i < nCpu:
+        print(f"CPU-bound process {id}: arrival time {arrivalTimes[i]}ms; {numCPUBurst[i]} CPU bursts:")
+    else:
+        print(f"I/O-bound process {id}: arrival time {arrivalTimes[i]}ms; {numCPUBurst[i]} CPU bursts:")
     for j in range (0, len(CPUBurstTimes[i])):
         curStr = "==> CPU burst " + str(CPUBurstTimes[i][j]) + "ms"
         if (IOBurstTimes[i][j] != 0):
@@ -103,3 +108,4 @@ f.write(f"-- CPU-bound average I/O burst time: {math.ceil(cpuTotalIO/nCpu*1000)/
 f.write(f"-- I/O-bound average I/O burst time: {math.ceil(ioTotalIO/(n-nCpu)*1000)/1000:.3f}ms\n")
 f.write(f"-- overall average I/O burst time: {math.ceil((cpuTotalIO+ioTotalIO)/n*1000)/1000:.3f}ms")
 f.close()
+sys.stdout.close()
