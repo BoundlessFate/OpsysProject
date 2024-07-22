@@ -40,8 +40,8 @@ nCpu = int(sys.argv[2])
 seed = int(sys.argv[3])
 lmda = float(sys.argv[4])
 upBound = int(sys.argv[5])
-if (n <= 0 or nCpu <= 0 or seed <= 0 or lmda <= 0 or upBound <= 0):
-    sys.stderr.write("ERROR: inputs less than or equal to 0")
+if (n <= 0 or nCpu < 0 or seed < 0 or lmda <= 0 or upBound <= 0):
+    sys.stderr.write("ERROR: inputs do not fit bounds")
     os.abort()
 rand = rand48()
 rand.srand48(seed)
@@ -129,11 +129,18 @@ f = open("simout.txt", "w")
 f.write(f"-- number of processes: {n}\n")
 f.write(f"-- number of CPU-bound processes: {nCpu}\n")
 f.write(f"-- number of I/O-bound processes: {n-nCpu}\n")
-# Dont need to check these because num cpu bursts is ceiling
-f.write(f"-- CPU-bound average CPU burst time: {math.ceil(cpuTotalCpu/totalNumCPUBurstsFromCPU*1000)/1000:.3f} ms\n")
-f.write(f"-- I/O-bound average CPU burst time: {math.ceil(ioTotalCpu/totalNumCPUBurstsFromIO*1000)/1000:.3f} ms\n")
-f.write(f"-- overall average CPU burst time: {math.ceil((cpuTotalCpu+ioTotalCpu)/(totalNumCPUBurstsFromCPU+totalNumCPUBurstsFromIO)*1000)/1000:.3f} ms\n")
-# Need to check these because it is num cpu bursts - 1 so can be 0
+if (totalNumCPUBurstsFromCPU == 0):
+    f.write(f"-- CPU-bound average CPU burst time: {0:.3f} ms\n")
+else:
+    f.write(f"-- CPU-bound average CPU burst time: {math.ceil(cpuTotalCpu/totalNumCPUBurstsFromCPU*1000)/1000:.3f} ms\n")
+if (totalNumCPUBurstsFromIO == 0):
+    f.write(f"-- I/O-bound average CPU burst time: {0:.3f} ms\n")
+else:
+    f.write(f"-- I/O-bound average CPU burst time: {math.ceil(ioTotalCpu/totalNumCPUBurstsFromIO*1000)/1000:.3f} ms\n")
+if (totalNumCPUBurstsFromCPU+totalNumCPUBurstsFromIO == 0):
+    f.write(f"-- overall average CPU burst time: {0:.3f} ms\n")
+else:
+    f.write(f"-- overall average CPU burst time: {math.ceil((cpuTotalCpu+ioTotalCpu)/(totalNumCPUBurstsFromCPU+totalNumCPUBurstsFromIO)*1000)/1000:.3f} ms\n")
 if totalNumIOBurstsFromCPU == 0:
     f.write(f"-- CPU-bound average I/O burst time: {0:.3f} ms\n")
 else:
@@ -142,7 +149,9 @@ if totalNumIOBurstsFromIO == 0:
     f.write(f"-- I/O-bound average I/O burst time: {0:.3f} ms\n")
 else:
     f.write(f"-- I/O-bound average I/O burst time: {math.ceil(ioTotalIO/totalNumIOBurstsFromIO*1000)/1000:.3f} ms\n")
-# Dont need to check because works with ceiling function to be at min 1
-f.write(f"-- overall average I/O burst time: {math.ceil((cpuTotalIO+ioTotalIO)/(totalNumIOBurstsFromCPU+totalNumIOBurstsFromIO)*1000)/1000:.3f} ms")
+if totalNumIOBurstsFromCPU+totalNumIOBurstsFromIO == 0:
+    f.write(f"-- overall average I/O burst time: {0:.3f} ms")
+else:
+    f.write(f"-- overall average I/O burst time: {math.ceil((cpuTotalIO+ioTotalIO)/(totalNumIOBurstsFromCPU+totalNumIOBurstsFromIO)*1000)/1000:.3f} ms")
 f.close()
 #sys.stdout.close()
