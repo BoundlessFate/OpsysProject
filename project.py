@@ -28,7 +28,7 @@ def next_exp():
 
 # USE THIS CODE BELOW ONLY FOR TESTING!!! WILL REDIRECT STDERR
 #sys.stderr = open('err.txt', 'w')
-sys.stdout = open('stdout.txt', 'w')
+#sys.stdout = open('stdout.txt', 'w')
 
 numArgs = len(sys.argv)
 if (numArgs != 6):
@@ -145,4 +145,4 @@ else:
 # Dont need to check because works with ceiling function to be at min 1
 f.write(f"-- overall average I/O burst time: {math.ceil((cpuTotalIO+ioTotalIO)/(totalNumIOBurstsFromCPU+totalNumIOBurstsFromIO)*1000)/1000:.3f} ms")
 f.close()
-sys.stdout.close()
+#sys.stdout.close()
