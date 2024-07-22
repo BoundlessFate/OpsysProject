@@ -31,7 +31,7 @@ def next_exp():
 #sys.stdout = open('stdout.txt', 'w')
 
 numArgs = len(sys.argv)
-if (numArgs != 6):
+if (numArgs < 6):
     sys.stderr.write("ERROR: wrong number of inputs given")
    # sys.stderr.close() # Close not needed on submit
     os.abort()
@@ -41,7 +41,7 @@ seed = int(sys.argv[3])
 lmda = float(sys.argv[4])
 upBound = int(sys.argv[5])
 if (n <= 0 or nCpu <= 0 or seed <= 0 or lmda <= 0 or upBound <= 0):
-    sys.stderr.write("ERROR: wrong number of inputs given")
+    sys.stderr.write("ERROR: inputs less than or equal to 0")
     os.abort()
 rand = rand48()
 rand.srand48(seed)
