@@ -46,7 +46,7 @@ def getQueueStr(queue):
     if len(queue) == 0:
         return returnStr + " empty]"
     for i in queue:
-        returnStr += f" {i}"
+        returnStr += f" {i.getId()}"
     returnStr += "]"
     return returnStr
 def getProcess(allProcesses, p):
@@ -73,9 +73,9 @@ def fcfs(n, allProcesses, letters, tCs):
             count = 0
             while(allProcesses[count].getArrivalTime() != time):
                 count += 1
-            id = allProcesses[count].getId()
-            readyQueue.append(id)
-            print(f"time {time}ms: Process {id} added to ready queue {getQueueStr(readyQueue)}")
+            cur = allProcesses[count]
+            readyQueue.append(cur)
+            print(f"time {time}ms: Process {cur.getId()} added to ready queue {getQueueStr(readyQueue)}")
         justFinishedIo = []
         for i in waitingOnIo:
             if time <= i.getBlockUntil():
@@ -86,7 +86,7 @@ def fcfs(n, allProcesses, letters, tCs):
             print(f"time {time}ms: Process {i.getId()} completed I/O; added to ready queue {getQueueStr(readyQueue)}")
 
 
-        if cpuBusyUntil <= time and context == 0:
+        if cpuBusyUntil <= time and context <= 0:
             # If process is in action
             if (cpuBusyUntil != -1):
                 cpuBusyUntil = -1
@@ -112,8 +112,6 @@ def fcfs(n, allProcesses, letters, tCs):
         time += 1
 
 def partTwo(n, allProcesses, tCs, alpha, tSlice):
-
-
     print("\n<<< PROJECT PART II")
     print(f"<<< -- t_cs={tCs}ms; alpha={alpha:.2f}; t_slice={tSlice}ms")
     fcfs(n, allProcesses, letters, tCs)
