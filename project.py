@@ -2,9 +2,9 @@ import sys
 import os
 import math
 letters = {0:"A",1:"B",2:"C",3:"D",4:"E",5:"F",6:"G",7:"H",8:"I",9:"J",10:"K",11:"L",12:"M",13:"N",14:"O",15:"P",16:"Q",17:"R",18:"S",19:"T",20:"U",21:"V",22:"W",23:"X",24:"Y",25:"Z"}
+
 # Process class to hopefully simplify all the logic in the algorithms
 class process:
-
     def __init__(self, arrivalTime, id, cpuBound):
         self.arrivalTime = arrivalTime
         self.id = id
@@ -40,7 +40,61 @@ class process:
         self.blockingUntil = time
     def getBlockUntil(self):
         return self.blockingUntil
-    
+
+class ContextSwitch:
+    def __init__(self, cSt):
+        self.cSt = int(cSt/2)
+        self.timeExit = -1
+        # Variable to check if one was recently completed
+        self.completed = False
+    def start(self, time):
+        # Dont start it again if the current context switch hasnt finished
+        if (self.timeExit > time):
+            return
+        self.completed = False
+        self.timeExit = time+self.cSt
+    def checkActive(self, curTime):
+        if (curTime >= self.timeExit and self.timeExit != -1):
+            self.completed = True
+            return True
+        return False
+    def getCompleted(self):
+        return self.completed
+    def reset(self):
+        self.completed = False
+        self.timeExit = -1
+
+class CPU:
+    def __init__(self, cSt):
+        self.curBursting = None
+        self.burstUntil = -1
+        self.context = ContextSwitch(cSt)
+    def burstCPU(self, process, time):
+        self.curBursting = process
+        self.burstUntil = time
+    def startContextSwitch(self, time):
+        self.context.start(time)
+    def switchActive(self, time):
+        return self.context.checkActive(time)
+    def switchCompleted(self, time):
+        self.context.checkActive(time)
+        return self.context.getCompleted()
+    def isBursting(self, time):
+        return self.burstUntil > time
+    def processInCPU(self):
+        return self.curBursting != None
+    def justFinishedBursting(self, time):
+        return self.burstUntil == time
+    def getProcess(self):
+        return self.curBursting
+    def stopBurst(self):
+        self.curBursting = None
+        self.burstUntil = -1
+    def resetSwitch(self):
+        self.context.reset()
+    def getProcess(self):
+        return self.curBursting
+
 def getQueueStr(queue):
     returnStr = "[Q"
     if len(queue) == 0:
@@ -49,25 +103,20 @@ def getQueueStr(queue):
         returnStr += f" {i.getId()}"
     returnStr += "]"
     return returnStr
-def getProcess(allProcesses, p):
-    for i in allProcesses:
-        if i.getId == p:
-            return i
-
 def fcfs(n, allProcesses, letters, tCs):
     time = 0
     readyQueue = []
     waitingOnIo = []
     numTerminated = 0
-    cpuBusyUntil = -1
-    curBursting = None
-    context = 0
+    cpu = CPU(tCs)
     print(f"time {time}ms: Simulator started for FCFS {getQueueStr(readyQueue)}")
     arrivalTimesSet = set()
+    # Create set of all arrival times
     for i in allProcesses:
         arrivalTimesSet.add(i.getArrivalTime())
-    while(numTerminated < len(allProcesses)):
-        # If a new process is arriving at this time
+    while(numTerminated < len(allProcesses) or not cpu.switchCompleted(time)):
+        # ARRIVAL TIME HANDLER
+        # If the time happens to be one that a process arrives
         if time in arrivalTimesSet:
             # Append process to the ready queue
             count = 0
@@ -75,41 +124,60 @@ def fcfs(n, allProcesses, letters, tCs):
                 count += 1
             cur = allProcesses[count]
             readyQueue.append(cur)
-            print(f"time {time}ms: Process {cur.getId()} added to ready queue {getQueueStr(readyQueue)}")
+            print(f"time {time}ms: Process {cur.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
+
+        # WAITINGONIO HANDLER
+        # If the time happens to be one that a process leaves io queue
         justFinishedIo = []
         for i in waitingOnIo:
-            if time <= i.getBlockUntil():
+            if time >= i.getBlockUntil():
                 justFinishedIo.append(i)
         for i in justFinishedIo:
             waitingOnIo.remove(i)
             readyQueue.append(i)
             print(f"time {time}ms: Process {i.getId()} completed I/O; added to ready queue {getQueueStr(readyQueue)}")
 
-
-        if cpuBusyUntil <= time and context <= 0:
-            # If process is in action
-            if (cpuBusyUntil != -1):
-                cpuBusyUntil = -1
-                if curBursting.getNumIOBursts == 0:
-                    print(f"time {time}ms: Process {curBursting.getId()} terminated {getQueueStr(readyQueue)}")
-                    numTerminated += 1
-                    continue
+        # ---------------------- PROBLEMATIC BIT!!! 99% SURE EVERYTHING ABOVE WORKS -----------------------
+        # CPU ACTION HANDLER
+        # Case: cpu is not holding a process, readyQueue isnt empty, and context switch is completed
+        # Ex. After context switch of new burst
+        if (not cpu.processInCPU() and cpu.switchCompleted(time) and len(readyQueue) != 0):
+                cpu.resetSwitch()
+                curBursting = readyQueue.pop(0)
+                curTime = curBursting.removeCPUBurst()
+                cpu.burstCPU(curBursting, time+curTime)
+                print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
+        # Case: Burst finished at this time, switch is not active
+        # Ex. Right at end of burst
+        if (cpu.justFinishedBursting(time) and not cpu.switchActive(time)):
+            # Start context switch
+            cpu.startContextSwitch(time)
+            curBursting = cpu.getProcess()
+            # End of process
+            if curBursting.getNumIOBursts() == 0:
+                print(f"time {time}ms: Process {curBursting.getId()} terminated {getQueueStr(readyQueue)}")
+                numTerminated += 1
+            # More to the process
+            else:
                 if (curBursting.getNumCPUBursts() == 1):
                     print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
                 else:
                     print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
+                curBursting.blockUntil(time+curBursting.removeIOBurst()+int(tCs/2))
                 print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
-                context = tCs
-                curBursting.blockUntil(time+curBursting.removeIOBurst())
                 waitingOnIo.append(curBursting)
-                continue
-            if len(readyQueue) != 0:
-                curBursting = readyQueue.pop(0)
-                curTime = curBursting.removeCPUBurst()
-                print(f"time {time}ms:Process {curBursting.getId()} started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
-                cpuBusyUntil = time + curTime
-        context -= 1
+        # Case: After finished burst and after context switch
+        # Ex. Process exits the CPU
+        if (not cpu.isBursting(time) and cpu.switchCompleted(time) and cpu.processInCPU()):
+            cpu.stopBurst()
+            cpu.resetSwitch()
+        # Case: cpu is not holding a process, readyQueue isnt empty, context switch hasnt been completed laready
+        # Ex. Before context switch of new burst
+        if (not cpu.processInCPU() and len(readyQueue) != 0 and not cpu.switchCompleted(time)):
+            # Start context switch
+            cpu.startContextSwitch(time)
         time += 1
+    print(f"time {time}ms: Simulator ended for FCFS {getQueueStr(readyQueue)}")
 
 def partTwo(n, allProcesses, tCs, alpha, tSlice):
     print("\n<<< PROJECT PART II")
@@ -230,16 +298,16 @@ else:
 print(f"<<< -- seed={seed}; lambda={lmda:.6f}; bound={upBound}")
 for i in allProcesses:
     id = i.getId()
-    if i.isCpuBound:
+    if i.isCpuBound():
         if i.getNumCPUBursts() == 1:
-            print(f"CPU-bound process {id}: arrival time {i.getArrivalTime()}ms; 1 CPU burst:")
+            print(f"CPU-bound process {id}: arrival time {i.getArrivalTime()}ms; 1 CPU burst")
         else:
-            print(f"CPU-bound process {id}: arrival time {i.getArrivalTime()}ms; {i.getNumCPUBursts()} CPU bursts:")
+            print(f"CPU-bound process {id}: arrival time {i.getArrivalTime()}ms; {i.getNumCPUBursts()} CPU bursts")
     else:
         if i.getNumCPUBursts() == 1:
-            print(f"I/O-bound process {id}: arrival time {i.getArrivalTime()}ms; 1 CPU burst:")
+            print(f"I/O-bound process {id}: arrival time {i.getArrivalTime()}ms; 1 CPU burst")
         else:
-            print(f"I/O-bound process {id}: arrival time {i.getArrivalTime()}ms; {i.getNumCPUBursts()} CPU bursts:")
+            print(f"I/O-bound process {id}: arrival time {i.getArrivalTime()}ms; {i.getNumCPUBursts()} CPU bursts")
 # SIMOUT STUFF FOR PART 1
 f = open("simout.txt", "w")
 f.write(f"-- number of processes: {n}\n")
