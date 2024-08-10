@@ -132,12 +132,10 @@ def fcfs(n, allProcesses, tCs):
         # If the time happens to be one that a process arrives
         if time in arrivalTimesSet:
             # Append process to the ready queue
-            count = 0
-            while(allProcesses[count].getArrivalTime() != time):
-                count += 1
-            cur = allProcesses[count]
-            readyQueue.append(cur)
-            print(f"time {time}ms: Process {cur.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
+            for i in allProcesses:
+                if i.getArrivalTime() == time:
+                    readyQueue.append(i)
+                    print(f"time {time}ms: Process {i.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
 
         # WAITINGONIO HANDLER
         # If the time happens to be one that a process leaves io queue
@@ -212,13 +210,11 @@ def sjf(n, allProcesses, tCs, alpha, lmda):
         # If the time happens to be one that a process arrives
         if time in arrivalTimesSet:
             # Append process to the ready queue
-            count = 0
-            while(allProcesses[count].getArrivalTime() != time):
-                count += 1
-            cur = allProcesses[count]
-            readyQueue.append(cur)
-            readyQueue = sorted(readyQueue, key=lambda p: (processTau[p.getId()], p.getId()))
-            print(f"time {time}ms: Process {cur.getId()} (tau {processTau[cur.getId()]}ms) arrived; added to ready queue {getQueueStr(readyQueue)}")
+            for i in allProcesses:
+                if i.getArrivalTime() == time:
+                    readyQueue.append(i)
+                    readyQueue = sorted(readyQueue, key=lambda p: (processTau[p.getId()], p.getId()))
+                    print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; added to ready queue {getQueueStr(readyQueue)}")
 
         # WAITINGONIO HANDLER
         # If the time happens to be one that a process leaves io queue
@@ -348,30 +344,28 @@ def srt(n, allProcesses, tCs, alpha, lmda):
         # If the time happens to be one that a process arrives
         if time in arrivalTimesSet:
             # Append process to the ready queue
-            count = 0
-            while(allProcesses[count].getArrivalTime() != time):
-                count += 1
-            cur = allProcesses[count]
-            readyQueue.append(cur)
-            readyQueue = sorted(readyQueue, key=lambda p: (processRemaining[p.getId()], p.getId()))
-            # Before appending this, cur process running will be the shortest remaining
-            # If this new process is shorter than cur process it will be inherently be in the start of the queue
-            # Preempt if this scary looking expression is true
-            # If currently bursting something on the cpu
-            # and if the process just added to the queue is hass less estimated time than the estimated remaining time of the process in the cpu
-            # and the cpu process doesnt have 0 time remaining
-            curBursting = cpu.getProcess()
-            if curBursting and processRemaining[readyQueue[0].getId()] < remainingTime(processRemaining[curBursting.getId()], processInitTime, time) and curBursting.getTimeForBurst()+processInitTime-time > 0:
-                rem = remainingTime(processRemaining[curBursting.getId(), processInitTime, time])
-                print(f"time {time}ms: Process {cur.getId()} (tau {processTau[cur.getId()]}ms) arrived; preempting {curBursting.getId()} (predicted remaining time {rem}ms) {getQueueStr(readyQueue)}")
-                # Set remaining time for currently bursting process and add back to ready queue
-                processRemaining[curBursting.getId()] = rem
-                readyQueue.append(curBursting)
-                readyQueue = sorted(readyQueue, key=lambda p: (processRemaining[p.getId()], p.getId()))
-                curBursting.addBurstToFront(cpu.getBurstUntil()-time)
-                cpu.startContextSwitch(time)
-            else:
-                print(f"time {time}ms: Process {cur.getId()} (tau {processTau[cur.getId()]}ms) arrived; added to ready queue {getQueueStr(readyQueue)}")
+            for i in allProcesses:
+                if i.getArrivalTime() == time:
+                    readyQueue.append(i)
+                    readyQueue = sorted(readyQueue, key=lambda p: (processTau[p.getId()], p.getId()))
+                    # Before appending this, cur process running will be the shortest remaining
+                    # If this new process is shorter than cur process it will be inherently be in the start of the queue
+                    # Preempt if this scary looking expression is true
+                    # If currently bursting something on the cpu
+                    # and if the process just added to the queue is hass less estimated time than the estimated remaining time of the process in the cpu
+                    # and the cpu process doesnt have 0 time remaining
+                    curBursting = cpu.getProcess()
+                    if curBursting and processRemaining[readyQueue[0].getId()] < remainingTime(processRemaining[curBursting.getId()], processInitTime, time) and curBursting.getTimeForBurst()+processInitTime-time > 0:
+                        rem = remainingTime(processRemaining[curBursting.getId(), processInitTime, time])
+                        print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; preempting {curBursting.getId()} (predicted remaining time {rem}ms) {getQueueStr(readyQueue)}")
+                        # Set remaining time for currently bursting process and add back to ready queue
+                        processRemaining[curBursting.getId()] = rem
+                        readyQueue.append(curBursting)
+                        readyQueue = sorted(readyQueue, key=lambda p: (processRemaining[p.getId()], p.getId()))
+                        curBursting.addBurstToFront(cpu.getBurstUntil()-time)
+                        cpu.startContextSwitch(time)
+                    else:
+                        print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; added to ready queue {getQueueStr(readyQueue)}")
         # WAITINGONIO HANDLER
         # If the time happens to be one that a process leaves io queue
         justFinishedIo = []
@@ -497,12 +491,10 @@ def rr(n, allProcesses, tCs, tSlice):
         # CASE: New Process Arrivals
         if time in arrivalTimesSet:
             # Append process to the ready queue
-            count = 0
-            while(allProcesses[count].getArrivalTime() != time):
-                count += 1
-            cur = allProcesses[count]
-            readyQueue.append(cur)
-            print(f"time {time}ms: Process {cur.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
+            for i in allProcesses:
+                if i.getArrivalTime() == time:
+                    readyQueue.append(i)
+                    print(f"time {time}ms: Process {i.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
         # MORE CONTEXT SWITCHES
         # Actions to start context switch for entering cpu
         if (not cpu.processInCPU() and len(readyQueue) != 0 and not cpu.switchActive(time)):
@@ -519,14 +511,14 @@ def rr(n, allProcesses, tCs, tSlice):
 
 
 def partTwo(n, allProcesses, tCs, alpha, tSlice, lmda):
-    print("\n<<< PROJECT PART II")
-    print(f"<<< -- t_cs={tCs}ms; alpha={alpha:.2f}; t_slice={tSlice}ms")
-    fcfs(n, copy.deepcopy(allProcesses), tCs)
-    print()
-    sjf(n, copy.deepcopy(allProcesses), tCs, alpha, lmda)
-    print()
-    srt(n, copy.deepcopy(allProcesses), tCs, alpha, lmda)
-    print()
+#    print("\n<<< PROJECT PART II")
+#    print(f"<<< -- t_cs={tCs}ms; alpha={alpha:.2f}; t_slice={tSlice}ms")
+#    fcfs(n, copy.deepcopy(allProcesses), tCs)
+#    print()
+#    sjf(n, copy.deepcopy(allProcesses), tCs, alpha, lmda)
+#    print()
+#    srt(n, copy.deepcopy(allProcesses), tCs, alpha, lmda)
+#    print()
     rr(n, copy.deepcopy(allProcesses), tCs, tSlice)
 
 # My version of srand48 and drand48 according to man pages
