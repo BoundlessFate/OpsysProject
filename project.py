@@ -63,10 +63,12 @@ class ContextSwitch:
         self.completed = False
         self.timeExit = time+self.cSt
     def checkActive(self, curTime):
-        if (curTime >= self.timeExit and self.timeExit != -1):
+        if self.timeExit == -1:
+            return False
+        if (curTime >= self.timeExit):
             self.completed = True
-            return True
-        return False
+            return False
+        return True
     def getCompleted(self):
         return self.completed
     def reset(self):
@@ -414,6 +416,108 @@ def srt(n, allProcesses, tCs, alpha, lmda):
         time += 1
     print(f"time {time}ms: Simulator ended for SRT {getQueueStr(readyQueue)}")
 
+# ------------------------------------------------------------ RR ALGORITHM -------------------------------------------------
+def rr(n, allProcesses, tCs, tSlice):
+    time = 0
+    readyQueue = []
+    waitingOnIo = []
+    numTerminated = 0
+    cpu = CPU(tCs)
+    curSlice = -1
+    preempted = False
+    enteringCPU = None
+    print(f"time {time}ms: Simulator started for RR {getQueueStr(readyQueue)}")
+    arrivalTimesSet = set()
+    # Create set of all arrival times and add processes to tao dict
+    for i in allProcesses:
+        arrivalTimesSet.add(i.getArrivalTime())
+    while(numTerminated < len(allProcesses) or not cpu.switchCompleted(time)):
+        # CASE: CPU Burst Completion
+        if (cpu.justFinishedBursting(time) and not cpu.switchActive(time) and not cpu.switchCompleted(time)):
+            # Start context switch
+            cpu.startContextSwitch(time)
+            curBursting = cpu.getProcess()
+            # End of process
+            if curBursting.getNumIOBursts() == 0:
+                print(f"time {time}ms: Process {curBursting.getId()} terminated {getQueueStr(readyQueue)}")
+                numTerminated += 1
+            # More to the process
+            else:
+                if (curBursting.getNumCPUBursts() == 1):
+                    print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
+                else:
+                    print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
+                curBursting.blockUntil(time+curBursting.removeIOBurst()+int(tCs/2))
+                print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
+                waitingOnIo.append(curBursting)
+        # CASE: Process Starts Using The CPU
+        if (not cpu.processInCPU() and cpu.switchCompleted(time)):
+                # Reset the tSlice component
+                curSlice = tSlice
+                cpu.resetSwitch()
+                # Was popped during the start of the context switch, so doesnt need to be popped again
+                curBursting = enteringCPU
+                curTime = None
+                if (curBursting.getTimeForBurst() != -1):
+                    curTime = curBursting.removeCPUBurst()
+                    print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for remaining {curTime}ms of {curBursting.getTimeForBurst()}ms burst {getQueueStr(readyQueue)}")
+                else:
+                    curTime = curBursting.removeCPUBurst()
+                    print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
+                cpu.burstCPU(curBursting, time+curTime)
+        # CASE: Preemption
+        if (cpu.processInCPU() and not cpu.switchActive(time) and not cpu.switchCompleted(time) and curSlice == 0):
+            if (len(readyQueue) == 0):
+                print(f"time {time}ms: Time slice expired; no preemption because ready queue is empty {getQueueStr(readyQueue)}")
+                # Reset curSlice
+                curSlice = tSlice                
+            else:
+                print(f"time {time}ms: Time slice expired; preempting process {curBursting.getId()} with {cpu.getBurstUntil()-time}ms remaining {getQueueStr(readyQueue)}")
+                curBursting.addBurstToFront(cpu.getBurstUntil()-time)
+                cpu.startContextSwitch(time)
+                preempted = True
+        # CONTEXT SWITCHES
+        # Actions after leaving cpu context switch ends
+        if (cpu.processInCPU() and cpu.switchCompleted(time)):
+            # If preempted, it goes back to ready queue
+            if preempted:
+                readyQueue.append(cpu.getProcess())
+                preempted = False
+            cpu.stopBurst()
+            cpu.resetSwitch()
+        # CASE: I/O Burst Completions
+        justFinishedIo = []
+        for i in waitingOnIo:
+            if time >= i.getBlockUntil():
+                justFinishedIo.append(i)
+        for i in justFinishedIo:
+            waitingOnIo.remove(i)
+            readyQueue.append(i)
+            print(f"time {time}ms: Process {i.getId()} completed I/O; added to ready queue {getQueueStr(readyQueue)}")
+        # CASE: New Process Arrivals
+        if time in arrivalTimesSet:
+            # Append process to the ready queue
+            count = 0
+            while(allProcesses[count].getArrivalTime() != time):
+                count += 1
+            cur = allProcesses[count]
+            readyQueue.append(cur)
+            print(f"time {time}ms: Process {cur.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
+        # MORE CONTEXT SWITCHES
+        # Actions to start context switch for entering cpu
+        if (not cpu.processInCPU() and len(readyQueue) != 0 and not cpu.switchActive(time)):
+            # Start context switch
+            cpu.startContextSwitch(time)
+            enteringCPU = readyQueue.pop(0)
+        time += 1
+        curSlice -= 1
+    print(f"time {time}ms: Simulator ended for RR {getQueueStr(readyQueue)}")
+
+
+
+
+
+
 def partTwo(n, allProcesses, tCs, alpha, tSlice, lmda):
     print("\n<<< PROJECT PART II")
     print(f"<<< -- t_cs={tCs}ms; alpha={alpha:.2f}; t_slice={tSlice}ms")
@@ -422,6 +526,8 @@ def partTwo(n, allProcesses, tCs, alpha, tSlice, lmda):
     sjf(n, copy.deepcopy(allProcesses), tCs, alpha, lmda)
     print()
     srt(n, copy.deepcopy(allProcesses), tCs, alpha, lmda)
+    print()
+    rr(n, copy.deepcopy(allProcesses), tCs, tSlice)
 
 # My version of srand48 and drand48 according to man pages
 class rand48:
