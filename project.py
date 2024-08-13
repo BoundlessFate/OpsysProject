@@ -117,9 +117,105 @@ def getQueueStr(queue):
         returnStr += f" {i.getId()}"
     returnStr += "]"
     return returnStr
+# ----------------------- PT2 SIMOUT HANDLER ---------------------------------
+def handleSimout(algorithm, totalTime, cpuUtilizedTime, cpuWaitTotal, ioWaitTotal, cpuTurnaroundTotal, ioTurnaroundTotal, cpuContext, ioContext, cpuPreemptions, ioPreemptions):
+    f = open("simout.txt", "a")
+    f.write(f"\nAlgorithm {algorithm}\n")
+    f.write(f"-- CPU utilization: {math.ceil((cpuUtilizedTime/totalTime)*100*1000)/1000:.3f}%\n")
+    if cpuContext == 0:
+        f.write(f"-- CPU-bound average wait time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- CPU-bound average wait time: {math.ceil(cpuWaitTotal/cpuContext*1000)/1000:.3f} ms\n")
+    if ioContext == 0:
+        f.write(f"-- I/O-bound average wait time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- I/O-bound average wait time: {math.ceil(ioWaitTotal/ioContext*1000)/1000:.3f} ms\n")
+    if cpuContext+ioContext == 0:
+        f.write(f"-- CPU-bound average wait time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- overall average wait time: {math.ceil((cpuWaitTotal+ioWaitTotal)/(cpuContext+ioContext)*1000)/1000:.3f} ms\n")
+    if cpuContext == 0:
+        f.write(f"-- CPU-bound average turnaround time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- CPU-bound average turnaround time: {math.ceil(cpuTurnaroundTotal/cpuContext*1000)/1000:.3f} ms\n")
+    if ioContext == 0:
+        f.write(f"-- I/O-bound average turnaround time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- I/O-bound average turnaround time: {math.ceil(ioTurnaroundTotal/ioContext*1000)/1000:.3f} ms\n")
+    if cpuContext+ioContext == 0:
+        f.write(f"-- CPU-bound average turnaround time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- overall average turnaround time: {math.ceil((cpuTurnaroundTotal+ioTurnaroundTotal)/(cpuContext+ioContext)*1000)/1000:.3f} ms\n")
+    f.write(f"-- CPU-bound number of context switches: {cpuContext}\n")
+    f.write(f"-- I/O-bound number of context switches: {ioContext}\n")
+    f.write(f"-- overall number of context switches: {cpuContext+ioContext}\n")
+    f.write(f"-- CPU-bound number of preemptions: {cpuPreemptions}\n")
+    f.write(f"-- I/O-bound number of preemptions: {ioPreemptions}\n")
+    f.write(f"-- overall number of preemptions: {cpuPreemptions+ioPreemptions}\n")
+    f.close()
+def rrExtraSimout(cpuCompletedOneSlice, ioCompletedOneSlice, nCpuBound, nIoBound):
+    f = open("simout.txt", "a")
+    if nCpuBound == 0:
+        f.write(f"-- CPU-bound percentage of CPU bursts completed within one time slice: {0:.3f}%\n")
+    else:
+        f.write(f"-- CPU-bound percentage of CPU bursts completed within one time slice: {math.ceil((cpuCompletedOneSlice/nCpuBound)*100*1000)/1000:.3f}%\n")
+    if nIoBound == 0:
+        f.write(f"-- I/O-bound percentage of CPU bursts completed within one time slice: {0:.3f}%\n")
+    else:
+        f.write(f"-- I/O-bound percentage of CPU bursts completed within one time slice: {math.ceil((ioCompletedOneSlice/nIoBound)*100*1000)/1000:.3f}%\n")
+    if nCpuBound+nIoBound == 0:
+        f.write(f"-- overall percentage of CPU bursts completed within one time slice: {0:.3f}%")
+    else:
+        f.write(f"-- overall percentage of CPU bursts completed within one time slice: {math.ceil(((cpuCompletedOneSlice+ioCompletedOneSlice)/(nCpuBound+nIoBound))*100*1000)/1000:.3f}%")
+    f.close()
+# Different because of preemptions with srt
+def handleSimoutTwo(algorithm, totalTime, cpuUtilizedTime, cpuWaitTotal, ioWaitTotal, cpuTurnaroundTotal, ioTurnaroundTotal, cpuContext, ioContext, cpuPreemptions, ioPreemptions, numCPUBurst, numIOBurst):
+    f = open("simout.txt", "a")
+    f.write(f"\nAlgorithm {algorithm}\n")
+    f.write(f"-- CPU utilization: {math.ceil((cpuUtilizedTime/totalTime)*100*1000)/1000:.3f}%\n")
+    if cpuContext == 0:
+        f.write(f"-- CPU-bound average wait time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- CPU-bound average wait time: {math.ceil(cpuWaitTotal/numCPUBurst*1000)/1000:.3f} ms\n")
+    if ioContext == 0:
+        f.write(f"-- I/O-bound average wait time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- I/O-bound average wait time: {math.ceil(ioWaitTotal/numIOBurst*1000)/1000:.3f} ms\n")
+    if cpuContext+ioContext == 0:
+        f.write(f"-- CPU-bound average wait time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- overall average wait time: {math.ceil((cpuWaitTotal+ioWaitTotal)/(numCPUBurst+numIOBurst)*1000)/1000:.3f} ms\n")
+    if numCPUBurst == 0:
+        f.write(f"-- CPU-bound average turnaround time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- CPU-bound average turnaround time: {math.ceil((cpuTurnaroundTotal/numCPUBurst)*1000)/1000:.3f} ms\n")
+    if numIOBurst == 0:
+        f.write(f"-- I/O-bound average turnaround time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- I/O-bound average turnaround time: {math.ceil((ioTurnaroundTotal/numIOBurst)*1000)/1000:.3f} ms\n")
+    if numCPUBurst+numIOBurst == 0:
+        f.write(f"-- CPU-bound average turnaround time: {0:.3f} ms\n")
+    else:
+        f.write(f"-- overall average turnaround time: {math.ceil(((cpuTurnaroundTotal+ioTurnaroundTotal)/(numCPUBurst+numIOBurst))*1000)/1000:.3f} ms\n")
+    f.write(f"-- CPU-bound number of context switches: {cpuContext}\n")
+    f.write(f"-- I/O-bound number of context switches: {ioContext}\n")
+    f.write(f"-- overall number of context switches: {cpuContext+ioContext}\n")
+    f.write(f"-- CPU-bound number of preemptions: {cpuPreemptions}\n")
+    f.write(f"-- I/O-bound number of preemptions: {ioPreemptions}\n")
+    f.write(f"-- overall number of preemptions: {cpuPreemptions+ioPreemptions}\n")
+    f.close()
 
 # ------------------------------------------------------------ FCFS ALGORITHM -------------------------------------------------
 def fcfs(n, allProcesses, tCs):
+    cpuUtilizedTime=0
+    cpuWaitTotal = 0 
+    ioWaitTotal = 0
+    cpuTurnaroundTotal = 0
+    ioTurnaroundTotal = 0
+    cpuStillRunning = 0
+    ioStillRunning = 0
+    cpuContext = 0
+    ioContext = 0
     time = 0
     readyQueue = []
     waitingOnIo = []
@@ -139,15 +235,21 @@ def fcfs(n, allProcesses, tCs):
             # End of process
             if curBursting.getNumIOBursts() == 0:
                 print(f"time {time}ms: Process {curBursting.getId()} terminated {getQueueStr(readyQueue)}")
+                if curBursting.isCpuBound():
+                    cpuStillRunning -= 1
+                else:
+                    ioStillRunning -= 1
                 numTerminated += 1
             # More to the process
             else:
-                if (curBursting.getNumCPUBursts() == 1):
-                    print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
-                else:
-                    print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    if (curBursting.getNumCPUBursts() == 1):
+                        print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
+                    else:
+                        print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
                 curBursting.blockUntil(time+curBursting.removeIOBurst()+int(tCs/2))
-                print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
                 waitingOnIo.append(curBursting)
         # CASE: Process Starts Using The CPU
         if (not cpu.processInCPU() and cpu.switchCompleted(time)):
@@ -155,7 +257,12 @@ def fcfs(n, allProcesses, tCs):
                 # Was popped during the start of the context switch, so doesnt need to be popped again
                 curBursting = enteringCPU
                 curTime = curBursting.removeCPUBurst()
-                print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
+                if curBursting.isCpuBound():
+                    cpuContext += 1
+                else:
+                    ioContext += 1
                 cpu.burstCPU(curBursting, time+curTime)
         # CONTEXT SWITCHES
         # Actions after leaving cpu context switch ends
@@ -171,25 +278,57 @@ def fcfs(n, allProcesses, tCs):
         for i in justFinishedIo:
             waitingOnIo.remove(i)
             readyQueue.append(i)
-            print(f"time {time}ms: Process {i.getId()} completed I/O; added to ready queue {getQueueStr(readyQueue)}")
+            if (time <= 9999):
+                print(f"time {time}ms: Process {i.getId()} completed I/O; added to ready queue {getQueueStr(readyQueue)}")
         # CASE: New Process Arrivals
         if time in arrivalTimesSet:
             # Append process to the ready queue
             for i in allProcesses:
                 if i.getArrivalTime() == time:
                     readyQueue.append(i)
-                    print(f"time {time}ms: Process {i.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
+                    if (time <= 9999):
+                        print(f"time {time}ms: Process {i.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
+                    if i.isCpuBound():
+                        cpuStillRunning += 1
+                    else:
+                        ioStillRunning += 1
         # MORE CONTEXT SWITCHES
         # Actions to start context switch for entering cpu
         if (not cpu.processInCPU() and len(readyQueue) != 0 and not cpu.switchActive(time)):
             # Start context switch
             cpu.startContextSwitch(time)
             enteringCPU = readyQueue.pop(0)
+        if (cpu.processInCPU() and not cpu.switchActive(time) and not cpu.switchCompleted(time)):
+            cpuUtilizedTime += 1
+        for i in readyQueue:
+            if i.isCpuBound():
+                cpuWaitTotal += 1
+            else:
+                ioWaitTotal += 1
+        for i in waitingOnIo:
+            if i.isCpuBound():
+                cpuTurnaroundTotal -= 1
+            else:
+                ioTurnaroundTotal -= 1
+        cpuTurnaroundTotal += cpuStillRunning
+        ioTurnaroundTotal += ioStillRunning
         time += 1
     print(f"time {time}ms: Simulator ended for FCFS {getQueueStr(readyQueue)}")
+    cpuTurnaroundTotal += 2*cpuContext
+    ioTurnaroundTotal += 2*ioContext
+    handleSimout("FCFS", time, cpuUtilizedTime, cpuWaitTotal, ioWaitTotal, cpuTurnaroundTotal, ioTurnaroundTotal, cpuContext, ioContext, 0, 0)
 
 # ---------------------------------------- SJF ALGORITHM ---------------------------------------------------
 def sjf(n, allProcesses, tCs, alpha, lmda):
+    cpuUtilizedTime=0
+    cpuWaitTotal = 0 
+    ioWaitTotal = 0
+    cpuTurnaroundTotal = 0
+    ioTurnaroundTotal = 0
+    cpuStillRunning = 0
+    ioStillRunning = 0
+    cpuContext = 0
+    ioContext = 0
     time = 0
     readyQueue = []
     waitingOnIo = []
@@ -212,19 +351,26 @@ def sjf(n, allProcesses, tCs, alpha, lmda):
             # End of process
             if curBursting.getNumIOBursts() == 0:
                 print(f"time {time}ms: Process {curBursting.getId()} terminated {getQueueStr(readyQueue)}")
+                if curBursting.isCpuBound():
+                    cpuStillRunning -= 1
+                else:
+                    ioStillRunning -= 1
                 numTerminated += 1
             # More to the process
             else:
-                if (curBursting.getNumCPUBursts() == 1):
-                    print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
-                else:
-                    print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    if (curBursting.getNumCPUBursts() == 1):
+                        print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
+                    else:
+                        print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
                 # Recalculate Tau for next use
                 oldTau = processTau[curBursting.getId()]
                 processTau[curBursting.getId()] = math.ceil(alpha * (curBursting.getTimeForBurst()) + (1-alpha) * processTau[curBursting.getId()])
-                print(f"time {time}ms: Recalculated tau for process {curBursting.getId()}: old tau {oldTau}ms ==> new tau {processTau[curBursting.getId()]}ms {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Recalculated tau for process {curBursting.getId()}: old tau {oldTau}ms ==> new tau {processTau[curBursting.getId()]}ms {getQueueStr(readyQueue)}")
                 curBursting.blockUntil(time+curBursting.removeIOBurst()+int(tCs/2))
-                print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
                 waitingOnIo.append(curBursting)
         # CASE: Process Starts Using The CPU
         if (not cpu.processInCPU() and cpu.switchCompleted(time)):
@@ -232,8 +378,13 @@ def sjf(n, allProcesses, tCs, alpha, lmda):
                 # Was popped during the start of the context switch, so doesnt need to be popped again
                 curBursting = enteringCPU
                 curTime = curBursting.removeCPUBurst()
-                print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
                 cpu.burstCPU(curBursting, time+curTime)
+                if curBursting.isCpuBound():
+                    cpuContext += 1
+                else:
+                    ioContext += 1
         # CONTEXT SWITCHES
         # Actions after leaving cpu context switch ends
         if (cpu.processInCPU() and cpu.switchCompleted(time)):
@@ -249,7 +400,8 @@ def sjf(n, allProcesses, tCs, alpha, lmda):
             waitingOnIo.remove(i)
             readyQueue.append(i)
             readyQueue = sorted(readyQueue, key=lambda p: (processTau[p.getId()], p.getId()))
-            print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) completed I/O; added to ready queue {getQueueStr(readyQueue)}")
+            if (time <= 9999):
+                print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) completed I/O; added to ready queue {getQueueStr(readyQueue)}")
         # CASE: New Process Arrivals
         if time in arrivalTimesSet:
             # Append process to the ready queue
@@ -257,20 +409,57 @@ def sjf(n, allProcesses, tCs, alpha, lmda):
                 if i.getArrivalTime() == time:
                     readyQueue.append(i)
                     readyQueue = sorted(readyQueue, key=lambda p: (processTau[p.getId()], p.getId()))
-                    print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; added to ready queue {getQueueStr(readyQueue)}")
+                    if (time <= 9999):
+                        print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; added to ready queue {getQueueStr(readyQueue)}")
+                    if i.isCpuBound():
+                        cpuStillRunning += 1
+                    else:
+                        ioStillRunning += 1
         # MORE CONTEXT SWITCHES
         # Actions to start context switch for entering cpu
         if (not cpu.processInCPU() and len(readyQueue) != 0 and not cpu.switchActive(time)):
             # Start context switch
             cpu.startContextSwitch(time)
             enteringCPU = readyQueue.pop(0)
+        if (cpu.processInCPU() and not cpu.switchActive(time) and not cpu.switchCompleted(time)):
+            cpuUtilizedTime += 1
+        for i in readyQueue:
+            if i.isCpuBound():
+                cpuWaitTotal += 1
+            else:
+                ioWaitTotal += 1
+        for i in waitingOnIo:
+            if i.isCpuBound():
+                cpuTurnaroundTotal -= 1
+            else:
+                ioTurnaroundTotal -= 1
+        cpuTurnaroundTotal += cpuStillRunning
+        ioTurnaroundTotal += ioStillRunning
         time += 1
     print(f"time {time}ms: Simulator ended for SJF {getQueueStr(readyQueue)}")
+    cpuTurnaroundTotal += 2*cpuContext
+    ioTurnaroundTotal += 2*ioContext
+    handleSimout("SJF", time, cpuUtilizedTime, cpuWaitTotal, ioWaitTotal, cpuTurnaroundTotal, ioTurnaroundTotal, cpuContext, ioContext, 0, 0)
 
 # ---------------------------------------- SRT ALGORITHM ---------------------------------------------------
 def remainingTime(remaining, start, now):
     return remaining-(now-start)
 def srt(n, allProcesses, tCs, alpha, lmda):
+    cpuWaitTotal = 0
+    ioWaitTotal = 0
+    cpuPreemptions = 0
+    ioPreemptions = 0
+    numCPUBursts=0
+    numIOBursts = 0
+    cpuUsageTotal = 0
+    ioUsageTotal = 0
+    cpuUtilizedTime=0
+    cpuTurnaroundTotal = 0
+    ioTurnaroundTotal = 0
+    cpuStillRunning = 0
+    ioStillRunning = 0
+    cpuContext = 0
+    ioContext = 0
     time = 0
     readyQueue = []
     waitingOnIo = []
@@ -288,6 +477,10 @@ def srt(n, allProcesses, tCs, alpha, lmda):
         arrivalTimesSet.add(i.getArrivalTime())
         processTau[i.getId()] = math.ceil(1/lmda)
         processRemaining[i.getId()] = math.ceil(1/lmda)
+        if i.isCpuBound():
+            numCPUBursts += i.getNumCPUBursts()
+        else:
+            numIOBursts += i.getNumCPUBursts()
     while(numTerminated < len(allProcesses) or not cpu.switchCompleted(time)):
         # CASE: CPU Burst Completion
         if (cpu.justFinishedBursting(time) and not cpu.switchActive(time) and not cpu.switchCompleted(time)):
@@ -298,19 +491,26 @@ def srt(n, allProcesses, tCs, alpha, lmda):
             if curBursting.getNumIOBursts() == 0:
                 print(f"time {time}ms: Process {curBursting.getId()} terminated {getQueueStr(readyQueue)}")
                 numTerminated += 1
+                if curBursting.isCpuBound():
+                    cpuStillRunning -= 1
+                else:
+                    ioStillRunning -= 1
             # More to the process
             else:
-                if (curBursting.getNumCPUBursts() == 1):
-                    print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
-                else:
-                    print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    if (curBursting.getNumCPUBursts() == 1):
+                        print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
+                    else:
+                        print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
                 # Recalculate Tau for next use
                 oldTau = processTau[curBursting.getId()]
                 processTau[curBursting.getId()] = math.ceil(alpha * (curBursting.getTimeForBurst()) + (1-alpha) * processTau[curBursting.getId()])
                 processRemaining[curBursting.getId()] = processTau[curBursting.getId()]
-                print(f"time {time}ms: Recalculated tau for process {curBursting.getId()}: old tau {oldTau}ms ==> new tau {processTau[curBursting.getId()]}ms {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Recalculated tau for process {curBursting.getId()}: old tau {oldTau}ms ==> new tau {processTau[curBursting.getId()]}ms {getQueueStr(readyQueue)}")
                 curBursting.blockUntil(time+curBursting.removeIOBurst()+int(tCs/2))
-                print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
                 waitingOnIo.append(curBursting)
         # CASE: Process Starts Using The CPU
         if (not cpu.processInCPU() and cpu.switchCompleted(time)):
@@ -320,17 +520,24 @@ def srt(n, allProcesses, tCs, alpha, lmda):
                 curTime = None
                 if (curBursting.getTimeForBurst() != -1):
                     curTime = curBursting.removeCPUBurst()
-                    print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) started using the CPU for remaining {curTime}ms of {curBursting.getTimeForBurst()}ms burst {getQueueStr(readyQueue)}")
+                    if (time <= 9999):
+                        print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) started using the CPU for remaining {curTime}ms of {curBursting.getTimeForBurst()}ms burst {getQueueStr(readyQueue)}")
                 else:
                     curTime = curBursting.removeCPUBurst()
-                    print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
+                    if (time <= 9999):
+                        print(f"time {time}ms: Process {curBursting.getId()} (tau {processTau[curBursting.getId()]}ms) started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
                 cpu.burstCPU(curBursting, time+curTime)
+                if curBursting.isCpuBound():
+                    cpuContext += 1
+                else:
+                    ioContext += 1
                 # Set the initial time for the running process to get the difference later for time spent
                 processInitTime = time
         # CASE: WEIRD EDGE CASE PREEMPTION
         curBursting = cpu.getProcess()
         if not preempted and curBursting and len(readyQueue) != 0 and processRemaining[readyQueue[0].getId()] < remainingTime(processRemaining[curBursting.getId()], processInitTime, time) and curBursting.getTimeForBurst()+processInitTime-time > 0:
-                print(f"time {time}ms: Process {readyQueue[0].getId()} (tau {processTau[readyQueue[0].getId()]}ms) will preempt {curBursting.getId()} {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {readyQueue[0].getId()} (tau {processTau[readyQueue[0].getId()]}ms) will preempt {curBursting.getId()} {getQueueStr(readyQueue)}")
                 processRemaining[curBursting.getId()] = remainingTime(processRemaining[curBursting.getId()], processInitTime, time)
                 curBursting.addBurstToFront(cpu.getBurstUntil()-time)
                 cpu.startContextSwitch(time)
@@ -353,14 +560,16 @@ def srt(n, allProcesses, tCs, alpha, lmda):
             readyQueue.append(i)
             readyQueue = sorted(readyQueue, key=lambda p: (processRemaining[p.getId()], p.getId()))
             if not preempted and curBursting and processRemaining[i.getId()] < remainingTime(processRemaining[curBursting.getId()], processInitTime, time) and curBursting.getTimeForBurst()+processInitTime-time > 0:
-                print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) completed I/O; preempting {curBursting.getId()} (predicted remaining time {remainingTime(processRemaining[curBursting.getId()], processInitTime, time)}ms) {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) completed I/O; preempting {curBursting.getId()} (predicted remaining time {remainingTime(processRemaining[curBursting.getId()], processInitTime, time)}ms) {getQueueStr(readyQueue)}")
                 # Set remaining time for currently bursting process and add back to ready queue
                 processRemaining[curBursting.getId()] = remainingTime(processRemaining[curBursting.getId()], processInitTime, time)
                 curBursting.addBurstToFront(cpu.getBurstUntil()-time)
                 cpu.startContextSwitch(time)
                 preempted = True
             else:
-                print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) completed I/O; added to ready queue {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) completed I/O; added to ready queue {getQueueStr(readyQueue)}")
         # CASE: New Process Arrivals
         if time in arrivalTimesSet:
             # Append process to the ready queue
@@ -377,18 +586,28 @@ def srt(n, allProcesses, tCs, alpha, lmda):
                     curBursting = cpu.getProcess()
                     if not preempted and curBursting and processRemaining[readyQueue[0].getId()] < remainingTime(processRemaining[curBursting.getId()], processInitTime, time) and curBursting.getTimeForBurst()+processInitTime-time > 0:
                         rem = remainingTime(processRemaining[curBursting.getId(), processInitTime, time])
-                        print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; preempting {curBursting.getId()} (predicted remaining time {rem}ms) {getQueueStr(readyQueue)}")
+                        if (time <= 9999):
+                            print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; preempting {curBursting.getId()} (predicted remaining time {rem}ms) {getQueueStr(readyQueue)}")
                         # Set remaining time for currently bursting process and add back to ready queue
                         processRemaining[curBursting.getId()] = rem
                         curBursting.addBurstToFront(cpu.getBurstUntil()-time)
                         cpu.startContextSwitch(time)
                         preempted = True
                     else:
-                        print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; added to ready queue {getQueueStr(readyQueue)}")
+                        if (time <= 9999):
+                            print(f"time {time}ms: Process {i.getId()} (tau {processTau[i.getId()]}ms) arrived; added to ready queue {getQueueStr(readyQueue)}")
+                    if i.isCpuBound():
+                        cpuStillRunning += 1
+                    else:
+                        ioStillRunning += 1
         # CONTEXT SWITCHES
         # Actions after leaving cpu context switch ends
         if (cpu.processInCPU() and cpu.switchCompleted(time)):
             if preempted:
+                if cpu.getProcess().isCpuBound():
+                    cpuPreemptions += 1
+                else:
+                    ioPreemptions += 1
                 readyQueue.append(cpu.getProcess())
                 readyQueue = sorted(readyQueue, key=lambda p: (processRemaining[p.getId()], p.getId()))
                 preempted = False
@@ -400,11 +619,50 @@ def srt(n, allProcesses, tCs, alpha, lmda):
             # Start context switch
             cpu.startContextSwitch(time)
             enteringCPU = readyQueue.pop(0)
+        if (cpu.processInCPU() and not cpu.switchActive(time) and not cpu.switchCompleted(time)):
+            cpuUtilizedTime += 1
+            if cpu.getProcess().isCpuBound():
+                cpuUsageTotal += 1
+            else:
+                ioUsageTotal += 1
+        for i in readyQueue:
+            if i.isCpuBound():
+                cpuWaitTotal += 1
+            else:
+                ioWaitTotal += 1
+        for i in waitingOnIo:
+            if i.isCpuBound():
+                cpuTurnaroundTotal -= 1
+            else:
+                ioTurnaroundTotal -= 1
+        cpuTurnaroundTotal += cpuStillRunning
+        ioTurnaroundTotal += ioStillRunning
         time += 1
     print(f"time {time}ms: Simulator ended for SRT {getQueueStr(readyQueue)}")
-
+    cpuWaitTotal = cpuTurnaroundTotal-cpuUsageTotal-2*(cpuContext+cpuPreemptions)
+    ioWaitTotal = ioTurnaroundTotal-ioUsageTotal-2*(ioContext+ioPreemptions)
+    cpuTurnaroundTotal += 2*cpuContext - cpuPreemptions*2
+    ioTurnaroundTotal += 2*ioContext - ioPreemptions*2
+    handleSimoutTwo("SRT", time, cpuUtilizedTime, cpuWaitTotal, ioWaitTotal, cpuTurnaroundTotal, ioTurnaroundTotal, cpuContext, ioContext, cpuPreemptions, ioPreemptions, numCPUBursts, numIOBursts)
 # ------------------------------------------------------------ RR ALGORITHM -------------------------------------------------
 def rr(n, allProcesses, tCs, tSlice):
+    cpuOneSlice = 0
+    ioOneSlice = 0
+    cpuPreemptions = 0
+    ioPreemptions = 0
+    cpuWaitTotal = 0
+    ioWaitTotal = 0
+    numCPUBursts=0
+    numIOBursts = 0
+    cpuUsageTotal = 0
+    ioUsageTotal = 0
+    cpuUtilizedTime=0
+    cpuTurnaroundTotal = 0
+    ioTurnaroundTotal = 0
+    cpuStillRunning = 0
+    ioStillRunning = 0
+    cpuContext = 0
+    ioContext = 0
     time = 0
     readyQueue = []
     waitingOnIo = []
@@ -418,6 +676,10 @@ def rr(n, allProcesses, tCs, tSlice):
     # Create set of all arrival times and add processes to tao dict
     for i in allProcesses:
         arrivalTimesSet.add(i.getArrivalTime())
+        if i.isCpuBound():
+            numCPUBursts += i.getNumCPUBursts()
+        else:
+            numIOBursts += i.getNumCPUBursts()
     while(numTerminated < len(allProcesses) or not cpu.switchCompleted(time)):
         # CASE: CPU Burst Completion
         if (cpu.justFinishedBursting(time) and not cpu.switchActive(time) and not cpu.switchCompleted(time)):
@@ -428,14 +690,20 @@ def rr(n, allProcesses, tCs, tSlice):
             if curBursting.getNumIOBursts() == 0:
                 print(f"time {time}ms: Process {curBursting.getId()} terminated {getQueueStr(readyQueue)}")
                 numTerminated += 1
+                if curBursting.isCpuBound():
+                    cpuStillRunning -= 1
+                else:
+                    ioStillRunning -= 1
             # More to the process
             else:
-                if (curBursting.getNumCPUBursts() == 1):
-                    print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
-                else:
-                    print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    if (curBursting.getNumCPUBursts() == 1):
+                        print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} burst to go {getQueueStr(readyQueue)}")
+                    else:
+                        print(f"time {time}ms: Process {curBursting.getId()} completed a CPU burst; {curBursting.getNumCPUBursts()} bursts to go {getQueueStr(readyQueue)}")
                 curBursting.blockUntil(time+curBursting.removeIOBurst()+int(tCs/2))
-                print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Process {curBursting.getId()} switching out of CPU; blocking on I/O until time {curBursting.getBlockUntil()}ms {getQueueStr(readyQueue)}")
                 waitingOnIo.append(curBursting)
         # CASE: Process Starts Using The CPU
         if (not cpu.processInCPU() and cpu.switchCompleted(time)):
@@ -447,19 +715,32 @@ def rr(n, allProcesses, tCs, tSlice):
                 curTime = None
                 if (curBursting.getTimeForBurst() != -1):
                     curTime = curBursting.removeCPUBurst()
-                    print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for remaining {curTime}ms of {curBursting.getTimeForBurst()}ms burst {getQueueStr(readyQueue)}")
+                    if (time <= 9999):
+                        print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for remaining {curTime}ms of {curBursting.getTimeForBurst()}ms burst {getQueueStr(readyQueue)}")
                 else:
                     curTime = curBursting.removeCPUBurst()
-                    print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
+                    if (time <= 9999):
+                        print(f"time {time}ms: Process {curBursting.getId()} started using the CPU for {curTime}ms burst {getQueueStr(readyQueue)}")
+                    if curTime <= tSlice:
+                        if curBursting.isCpuBound():
+                            cpuOneSlice += 1
+                        else:
+                            ioOneSlice += 1
                 cpu.burstCPU(curBursting, time+curTime)
+                if curBursting.isCpuBound():
+                    cpuContext += 1
+                else:
+                    ioContext += 1
         # CASE: Preemption
         if (cpu.processInCPU() and not cpu.switchActive(time) and not cpu.switchCompleted(time) and curSlice == 0):
             if (len(readyQueue) == 0):
-                print(f"time {time}ms: Time slice expired; no preemption because ready queue is empty {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Time slice expired; no preemption because ready queue is empty {getQueueStr(readyQueue)}")
                 # Reset curSlice
                 curSlice = tSlice                
             else:
-                print(f"time {time}ms: Time slice expired; preempting process {curBursting.getId()} with {cpu.getBurstUntil()-time}ms remaining {getQueueStr(readyQueue)}")
+                if (time <= 9999):
+                    print(f"time {time}ms: Time slice expired; preempting process {curBursting.getId()} with {cpu.getBurstUntil()-time}ms remaining {getQueueStr(readyQueue)}")
                 curBursting.addBurstToFront(cpu.getBurstUntil()-time)
                 cpu.startContextSwitch(time)
                 preempted = True
@@ -468,6 +749,10 @@ def rr(n, allProcesses, tCs, tSlice):
         if (cpu.processInCPU() and cpu.switchCompleted(time)):
             # If preempted, it goes back to ready queue
             if preempted:
+                if cpu.getProcess().isCpuBound():
+                    cpuPreemptions += 1
+                else:
+                    ioPreemptions += 1
                 readyQueue.append(cpu.getProcess())
                 preempted = False
             cpu.stopBurst()
@@ -481,23 +766,53 @@ def rr(n, allProcesses, tCs, tSlice):
         for i in justFinishedIo:
             waitingOnIo.remove(i)
             readyQueue.append(i)
-            print(f"time {time}ms: Process {i.getId()} completed I/O; added to ready queue {getQueueStr(readyQueue)}")
+            if (time <= 9999):
+                print(f"time {time}ms: Process {i.getId()} completed I/O; added to ready queue {getQueueStr(readyQueue)}")
         # CASE: New Process Arrivals
         if time in arrivalTimesSet:
             # Append process to the ready queue
             for i in allProcesses:
                 if i.getArrivalTime() == time:
                     readyQueue.append(i)
-                    print(f"time {time}ms: Process {i.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
+                    if (time <= 9999):
+                        print(f"time {time}ms: Process {i.getId()} arrived; added to ready queue {getQueueStr(readyQueue)}")
+                    if i.isCpuBound():
+                        cpuStillRunning += 1
+                    else:
+                        ioStillRunning += 1
         # MORE CONTEXT SWITCHES
         # Actions to start context switch for entering cpu
         if (not cpu.processInCPU() and len(readyQueue) != 0 and not cpu.switchActive(time)):
             # Start context switch
             cpu.startContextSwitch(time)
             enteringCPU = readyQueue.pop(0)
+        if (cpu.processInCPU() and not cpu.switchActive(time) and not cpu.switchCompleted(time)):
+            cpuUtilizedTime += 1
+            if cpu.getProcess().isCpuBound():
+                cpuUsageTotal += 1
+            else:
+                ioUsageTotal += 1
+        for i in readyQueue:
+            if i.isCpuBound():
+                cpuWaitTotal += 1
+            else:
+                ioWaitTotal += 1
+        for i in waitingOnIo:
+            if i.isCpuBound():
+                cpuTurnaroundTotal -= 1
+            else:
+                ioTurnaroundTotal -= 1
+        cpuTurnaroundTotal += cpuStillRunning
+        ioTurnaroundTotal += ioStillRunning
         time += 1
         curSlice -= 1
     print(f"time {time}ms: Simulator ended for RR {getQueueStr(readyQueue)}")
+    cpuWaitTotal = cpuTurnaroundTotal-cpuUsageTotal-2*(cpuContext+cpuPreemptions)
+    ioWaitTotal = ioTurnaroundTotal-ioUsageTotal-2*(ioContext+ioPreemptions)
+    cpuTurnaroundTotal += 2*cpuContext - cpuPreemptions*2
+    ioTurnaroundTotal += 2*ioContext - ioPreemptions*2
+    handleSimoutTwo("RR", time, cpuUtilizedTime, cpuWaitTotal, ioWaitTotal, cpuTurnaroundTotal, ioTurnaroundTotal, cpuContext, ioContext, cpuPreemptions, ioPreemptions, numCPUBursts, numIOBursts)
+    rrExtraSimout(cpuOneSlice, ioOneSlice, numCPUBursts, numIOBursts)
 
 def partTwo(n, allProcesses, tCs, alpha, tSlice, lmda):
     print("\n<<< PROJECT PART II")
@@ -660,8 +975,8 @@ if totalNumIOBurstsFromIO == 0:
 else:
     f.write(f"-- I/O-bound average I/O burst time: {math.ceil(ioTotalIO/totalNumIOBurstsFromIO*1000)/1000:.3f} ms\n")
 if totalNumIOBurstsFromCPU+totalNumIOBurstsFromIO == 0:
-    f.write(f"-- overall average I/O burst time: {0:.3f} ms")
+    f.write(f"-- overall average I/O burst time: {0:.3f} ms\n\n")
 else:
-    f.write(f"-- overall average I/O burst time: {math.ceil((cpuTotalIO+ioTotalIO)/(totalNumIOBurstsFromCPU+totalNumIOBurstsFromIO)*1000)/1000:.3f} ms")
+    f.write(f"-- overall average I/O burst time: {math.ceil((cpuTotalIO+ioTotalIO)/(totalNumIOBurstsFromCPU+totalNumIOBurstsFromIO)*1000)/1000:.3f} ms\n")
 f.close()
 partTwo(n, allProcesses, tCs, alpha, tSlice, lmda)
